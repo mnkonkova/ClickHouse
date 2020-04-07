@@ -1,3 +1,5 @@
+include (${CMAKE_CURRENT_SOURCE_DIR}/etcd_protos/etcd_protos.cmake)
+
 set(CLICKHOUSE_SERVER_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/HTTPHandler.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/HTTPHandlerFactory.cpp
@@ -11,6 +13,11 @@ set(CLICKHOUSE_SERVER_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/RootRequestHandler.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Server.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/TCPHandler.cpp
+    ${PROTO_SRCS}
+    ${PROTO_HDRS}
+    ${GRPC_SRCS}
+    ${GRPC_HDRS}
+    ${CMAKE_CURRENT_SOURCE_DIR}/GRPCHandler.cpp
    )
 
 set(CLICKHOUSE_SERVER_SOURCES
