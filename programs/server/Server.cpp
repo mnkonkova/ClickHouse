@@ -1,7 +1,6 @@
 #include "Server.h"
 
 #include <memory>
-#include <array>
 #include <sys/resource.h>
 #include <sys/stat.h>
 #include <sys/types.h>
