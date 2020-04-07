@@ -1,6 +1,7 @@
 #include "Server.h"
 
 #include <memory>
+#include <array>
 #include <sys/resource.h>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -63,7 +64,7 @@
 #include <Common/SensitiveDataMasker.h>
 #include <Common/ThreadFuzzer.h>
 #include "MySQLHandlerFactory.h"
-
+#include "GRPCHandler.h"
 #if defined(OS_LINUX)
 #include <Common/hasLinuxCapability.h>
 #include <sys/mman.h>
@@ -672,6 +673,10 @@ int Server::main(const std::vector<std::string> & /*args*/)
             listen_try = true;
         }
 
+        std::vector<std::unique_ptr<grpc::Server>> gRPCServers;
+        std::list<grpc::ServerBuilder> gRPCBuilders;
+        std::list<GRPCHandler> gRPCServices;
+
         auto make_socket_address = [&](const std::string & host, UInt16 port)
         {
             Poco::Net::SocketAddress socket_address;
@@ -887,6 +892,21 @@ int Server::main(const std::vector<std::string> & /*args*/)
 
                 LOG_INFO(log, "Listening for MySQL compatibility protocol: " + address.toString());
             });
+            
+            create_server("grpc_port", [&](UInt16 port)
+            {   
+                std::string server_address(listen_host + ':' + std::to_string(port));
+                if (listen_host == "::1") {
+                    //TODO check host
+                    server_address = "[" + listen_host + "]" + ':' + std::to_string(port);
+                }
+                gRPCBuilders.emplace_back();
+                gRPCServices.emplace_back();
+                gRPCBuilders.back().AddListeningPort(server_address, grpc::InsecureServerCredentials());
+                gRPCBuilders.back().RegisterService(&gRPCServices.back());
+                gRPCServers.emplace_back(gRPCBuilders.back().BuildAndStart());
+                LOG_INFO(log, "Listening for gRPC protocol: " + server_address);
+            });
 
             /// Prometheus (if defined and not setup yet with http_port)
             create_server("prometheus.port", [&](UInt16 port)
@@ -914,6 +934,14 @@ int Server::main(const std::vector<std::string> & /*args*/)
 
         for (auto & server : servers)
             server->start();
+        for (auto & server : gRPCServers) {
+            if (server) {
+                LOG_INFO(log, "GRPC OK");
+                server->Wait();
+            } else {
+                LOG_INFO(log, "NOT GRPC OK");
+            }
+        }
 
         {
             String level_str = config().getString("text_log.level", "");
@@ -949,6 +977,11 @@ int Server::main(const std::vector<std::string> & /*args*/)
             {
                 server->stop();
                 current_connections += server->currentConnections();
+            }
+            for (auto & server : gRPCServers) {
+                if (server) {
+                    server->Shutdown();
+                }
             }
 
             LOG_INFO(log,
