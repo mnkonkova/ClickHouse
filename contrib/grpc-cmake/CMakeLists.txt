@@ -100,8 +100,10 @@ set(_gRPC_UPB_LIBRARIES upb)
 set(ZLIB_ROOT_DIR ${GRPC_SOURCE_DIR}/third_party/zlib)
 include_directories("${ZLIB_ROOT_DIR}")
 # add_subdirectory(${ZLIB_ROOT_DIR} ${ZLIB_ROOT_DIR})
-set(_gRPC_ZLIB_LIBRARIES zlibstatic)
-set(_gRPC_ZLIB_INCLUDE_DIR "${ZLIB_ROOT_DIR}")
+if(TARGET zlibstatic)
+  set(_gRPC_ZLIB_LIBRARIES zlibstatic)
+  set(_gRPC_ZLIB_INCLUDE_DIR "${ZLIB_ROOT_DIR}" "${GRPC_SOURCE_DIR}/third_party/zlib")
+endif()
 #include(${GRPC_SOURCE_DIR}/cmake/zlib.cmake)
 
 
