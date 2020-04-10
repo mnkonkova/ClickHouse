@@ -104,7 +104,6 @@ if(TARGET zlibstatic)
   set(_gRPC_ZLIB_LIBRARIES zlibstatic)
   set(_gRPC_ZLIB_INCLUDE_DIR "${ZLIB_ROOT_DIR}" "${GRPC_SOURCE_DIR}/third_party/zlib")
 endif()
-#include(${GRPC_SOURCE_DIR}/cmake/zlib.cmake)
 
 
 set(CMAKE_C_FLAGS   "${CMAKE_C_FLAGS} -std=c99")
